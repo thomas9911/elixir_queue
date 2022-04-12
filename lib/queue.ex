@@ -4,7 +4,7 @@ defmodule Queue do
 
   Optionally also implements the Enumerable and Collectable protocols (turned on by default). This can be turned of by setting 
   ```
-  config :queue, 
+  config :elixir_queue, 
     implement_enumerable: false
     implement_collectable: false
   ```
@@ -214,7 +214,7 @@ defmodule Queue do
   end
 end
 
-if Application.compile_env(:queue, :implement_enumerable, true) == true do
+if Application.compile_env(:elixir_queue, :implement_enumerable, true) == true do
   defimpl Enumerable, for: Tuple do
     require Queue
 
@@ -235,7 +235,7 @@ if Application.compile_env(:queue, :implement_enumerable, true) == true do
   end
 end
 
-if Application.compile_env(:queue, :implement_collectable, true) == true do
+if Application.compile_env(:elixir_queue, :implement_collectable, true) == true do
   defimpl Collectable, for: Tuple do
     def into(queue) do
       collector_fun = fn

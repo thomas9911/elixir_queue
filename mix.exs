@@ -3,7 +3,7 @@ defmodule Queue.MixProject do
 
   def project do
     [
-      app: :queue,
+      app: :elixir_queue,
       version: "0.1.0",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,

@@ -2,7 +2,7 @@ defmodule QueueTest do
   use ExUnit.Case
   doctest Queue
 
-  if Application.compile_env(:queue, :implement_enumerable, true) == true do
+  if Application.compile_env(:elixir_queue, :implement_enumerable, true) == true do
     describe "Queue implements Enumerable" do
       test "to_list" do
         assert [1, 2, 3, 4, 5] == Enum.to_list(Queue.new([1, 2, 3, 4, 5]))
@@ -24,7 +24,7 @@ defmodule QueueTest do
     end
   end
 
-  if Application.compile_env(:queue, :implement_collectable, true) == true do
+  if Application.compile_env(:elixir_queue, :implement_collectable, true) == true do
     def queues_are_equal(queue1, queue2) do
       # we do these weird comparisons because the underlying data structures are not the same
       # but they contain the same elements
