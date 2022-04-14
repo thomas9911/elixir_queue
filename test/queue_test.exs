@@ -1,6 +1,8 @@
 defmodule QueueTest do
   use ExUnit.Case
   doctest Queue
+  doctest Queue.Collection
+  doctest Queue.ReverseCollection
 
   if Application.compile_env(:elixir_queue, :implement_enumerable, true) == true do
     describe "Queue implements Enumerable" do

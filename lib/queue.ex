@@ -2,20 +2,24 @@ defmodule Queue do
   @moduledoc """
   Elixir wrapper around erlang :queue
 
-  Optionally also implements the Enumerable and Collectable protocols (turned on by default). This can be turned of by setting 
+  Optionally also implements the Enumerable and Collectable protocols (turned on by default). This can be turned of by setting
   ```
-  config :elixir_queue, 
+  config :elixir_queue,
     implement_enumerable: false
     implement_collectable: false
   ```
-  in the config. 
+  in the config.
   I made these optional because this implement these protocols for `Tuple`'s and if you have your own implementation of these protocols on `Tuple`s there is a problem.
-
+  If you still use the Enum module look at `Queue.Collection` and `Queue.ReverseCollection`
   """
 
   @type t :: :queue.queue()
 
   defguard is_empty(queue) when queue == {[], []}
+
+  defguard is_queue(queue)
+           when is_tuple(queue) and tuple_size(queue) == 2 and is_list(elem(queue, 0)) and
+                  is_list(elem(queue, 1))
 
   @otp_24_or_higher match?(
                       {version, ""} when version >= 24,
@@ -30,6 +34,10 @@ defmodule Queue do
   @doc """
   see `new/0` `new/2`
   """
+  def new(queue) when is_queue(queue) do
+    queue
+  end
+
   def new(enum) do
     enum
     |> Enum.to_list()
@@ -272,11 +280,11 @@ defmodule Queue do
     (small thing to keep in mind under the hood it uses `:queue.filter/2` so if you return a boolean it also does something)
 
     ```elixir
-    iex> [1,2,3] 
+    iex> [1,2,3]
     ...> |> Queue.new()
     ...> |> Queue.flat_map(fn
-    ...>   2 -> [] 
-    ...>   x -> [x, x] 
+    ...>   2 -> []
+    ...>   x -> [x, x]
     ...> end)
     {[3, 3], [1, 1]} # Queue.new([1,1,3,3])
     ```
@@ -314,7 +322,7 @@ defmodule Queue do
     end
 
     @doc """
-    Transforms Queue based on the filter function. 
+    Transforms Queue based on the filter function.
     If the filter returns falsy the value will be dropped, if it returns truthy it keeps the value.
 
     ```elixir
