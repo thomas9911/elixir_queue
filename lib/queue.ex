@@ -17,6 +17,11 @@ defmodule Queue do
 
   defguard is_empty(queue) when queue == {[], []}
 
+  @otp_24_or_higher match?(
+                      {version, ""} when version >= 24,
+                      System.otp_release() |> Integer.parse()
+                    )
+
   defdelegate new, to: :queue
 
   @spec new() :: Queue.t()
@@ -211,6 +216,127 @@ defmodule Queue do
   """
   def member?(queue, item) do
     :queue.member(item, queue)
+  end
+
+  if @otp_24_or_higher do
+    @doc """
+    Similar to `Enum.all?/2` but works directly on the queue.
+
+    ```elixir
+    iex> [3,4,5,6] |>  Queue.new() |> Queue.all?(& &1 > 2)
+    true
+    iex> [2,3,4,5,6] |>  Queue.new() |> Queue.all?(& &1 > 2)
+    false
+    iex> [3,4,5,6] |>  Queue.new() |> Queue.all?(& &1 > 2)
+    [3,4,5,6] |>  Queue.new() |> Queue.to_list() |> Enum.all?(& &1 > 2)
+    ```
+    """
+    def all?(queue, func) do
+      :queue.all(func, queue)
+    end
+
+    @doc """
+    Similar to `Enum.any?/2` but works directly on the queue.
+
+    ```elixir
+    iex> [1,2,3,4,5,6] |>  Queue.new() |> Queue.any?(& &1 > 2)
+    true
+    iex> [1,2,3,4,5,6] |>  Queue.new() |> Queue.any?(& &1 > 25)
+    false
+    iex> [1,2,3,4,5,6] |>  Queue.new() |> Queue.any?(& &1 > 2)
+    [1,2, 3,4,5,6] |>  Queue.new() |> Queue.to_list() |> Enum.any?(& &1 > 2)
+    ```
+    """
+    def any?(queue, func) do
+      :queue.any(func, queue)
+    end
+
+    @doc """
+    Similar to `Enum.reduce/3` but works directly on the queue.
+    (also works if you have disabled the Enumerable protocol)
+
+    ```elixir
+    iex> [1,2,3,4] |> Queue.new() |> Queue.reduce(0, & &1 + &2)
+    10
+    iex> [1,2,3,4] |> Queue.new() |> Queue.reduce(0, & &1 + &2)
+    [1,2,3,4] |> Queue.new() |> Queue.to_list() |> Enum.reduce(0, & &1 + &2)
+    ```
+    """
+    def reduce(queue, acc, func) do
+      :queue.fold(func, acc, queue)
+    end
+
+    @doc """
+    Similar to `Enum.flat_map/2` but works directly on the queue.
+
+    (small thing to keep in mind under the hood it uses `:queue.filter/2` so if you return a boolean it also does something)
+
+    ```elixir
+    iex> [1,2,3] 
+    ...> |> Queue.new()
+    ...> |> Queue.flat_map(fn
+    ...>   2 -> [] 
+    ...>   x -> [x, x] 
+    ...> end)
+    {[3, 3], [1, 1]} # Queue.new([1,1,3,3])
+    ```
+    """
+    def flat_map(queue, func) do
+      :queue.filter(func, queue)
+    end
+
+    @doc """
+    Similar to `Enum.filter/2` but works directly on the queue.
+
+    (small thing to keep in mind under the hood it uses `:queue.filter/2` so if you return a list it also does something)
+
+    ```elixir
+    iex> [1,2,3,4,5,6,7,8] |> Queue.new() |> Queue.filter(fn x -> rem(x, 2) == 0 end)
+    {[8, 6], [2, 4]} # Queue.new([2,4,6,8])
+    ```
+    """
+    def filter(queue, func) do
+      :queue.filter(func, queue)
+    end
+
+    @doc """
+    Similar to `Enum.reject/2` but works directly on the queue.
+
+    (small thing to keep in mind under the hood it uses `:queue.filter/2` so if you return a list it also does something)
+
+    ```elixir
+    iex> [1,2,3,4,5,6,7,8] |> Queue.new() |> Queue.reject(fn x -> rem(x, 2) == 0 end)
+    Queue.new([1,3,5,7])
+    ```
+    """
+    def reject(queue, func) do
+      :queue.filter(&(!func.(&1)), queue)
+    end
+
+    @doc """
+    Transforms Queue based on the filter function. 
+    If the filter returns falsy the value will be dropped, if it returns truthy it keeps the value.
+
+    ```elixir
+    # if item is even multiply by 2 and add 1
+    iex> [1,2,3,4] |> Queue.new() |> Queue.filter_map(fn x -> if rem(x,2) == 0, do: x*2 + 1 end)
+    Queue.new([5, 9])
+    ```
+    """
+    def filter_map(queue, func) do
+      :queue.filtermap(
+        fn x ->
+          case func.(x) do
+            true -> true
+            false -> false
+            nil -> false
+            item -> {true, item}
+          end
+        end,
+        queue
+      )
+    end
+  else
   end
 end
 
